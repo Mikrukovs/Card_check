@@ -1,4 +1,3 @@
-// Управление загрузкой логотипов в карточках
 class CardCarouselManager {
     constructor() {
         this.inputs = Array.from(document.querySelectorAll('.logo-input'));
@@ -17,7 +16,6 @@ class CardCarouselManager {
         });
     }
 
-    // Восстановление карточек из localStorage
     restoreCards() {
         const savedData = this.loadAllCardsData();
         if (!savedData) return;
@@ -45,7 +43,6 @@ class CardCarouselManager {
         });
     }
 
-    // Сохранение данных карточки
     saveCardData(cardId, data) {
         try {
             const allData = this.loadAllCardsData() || {};
@@ -59,7 +56,6 @@ class CardCarouselManager {
         }
     }
 
-    // Загрузка всех данных карточек
     loadAllCardsData() {
         try {
             const data = localStorage.getItem(this.storageKey);
@@ -92,7 +88,6 @@ class CardCarouselManager {
             card.classList.add('has-logo');
             placeholder?.setAttribute('aria-hidden', 'true');
             
-            // Сохраняем изображение в localStorage
             this.saveCardData(cardId, { imageUrl: dataUrl });
             
             this.applyCardColors(card, dataUrl);
@@ -117,10 +112,9 @@ class CardCarouselManager {
         img.src = dataUrl;
         }
         
-    // Проверка наличия прозрачности в изображении
     checkImageTransparency(image) {
         try {
-            const size = Math.min(image.width, image.height, 100); // Небольшой семпл для быстрой проверки
+            const size = Math.min(image.width, image.height, 100);
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
             tempCanvas.width = size;
@@ -128,10 +122,9 @@ class CardCarouselManager {
             tempCtx.drawImage(image, 0, 0, size, size);
             const { data } = tempCtx.getImageData(0, 0, size, size);
             
-            // Проверяем каждый 10-й пиксель для оптимизации
-            for (let i = 3; i < data.length; i += 40) { // +40 = каждый 10-й пиксель (4 байта * 10)
+            for (let i = 3; i < data.length; i += 40) {
                 if (data[i] < 255) {
-                    return true; // Найден прозрачный/полупрозрачный пиксель
+                    return true;
                 }
             }
             return false;
@@ -141,7 +134,6 @@ class CardCarouselManager {
         }
     }
         
-    // Анализ палитры: без градиентов, все проверки выполняются только по краям картинки
     analyzePalette(image) {
         try {
             const size = this.sampleSize;
@@ -165,9 +157,7 @@ class CardCarouselManager {
                 };
             }
 
-            // Проверка черного края
             if (this.isAlmostBlack(dominantEdge.color) && dominantEdge.dominance >= WHITE_EDGE_THRESHOLD) {
-                // Черный край - используем темный фон с добавлением 10% белого
                 const blackWithWhite = this.mixWithWhite({ r: 20, g: 20, b: 20 }, 0.1);
                 return {
                     mode: 'solid',
@@ -175,15 +165,12 @@ class CardCarouselManager {
                 };
             }
 
-            // Проверка белого края
             if (this.isAlmostWhite(dominantEdge.color) && dominantEdge.dominance >= WHITE_EDGE_THRESHOLD) {
-                // Белый край - проверяем края на наличие темных цветов (черный логотип)
                 const darkColors = stats.edgeColors.filter(color => {
                     const { l } = this.rgbToHsl(color.r, color.g, color.b);
-                    return l < 0.4; // Темные цвета
+                    return l < 0.4;
                 });
 
-                // Если есть темные цвета в краях (черный логотип), используем темный фон с добавлением 10% белого
                 if (darkColors.length > stats.edgeColors.length * 0.15) {
                     const blackWithWhite = this.mixWithWhite({ r: 20, g: 20, b: 20 }, 0.1);
                     return {
@@ -192,7 +179,6 @@ class CardCarouselManager {
                     };
                 }
 
-                // Иначе используем белый фон с добавлением 25% черного для большего затемнения
                 const whiteWithBlack = this.mixWithBlack({ r: 255, g: 255, b: 255 }, 0.30);
                 return {
                     mode: 'solid',
@@ -200,20 +186,16 @@ class CardCarouselManager {
                 };
             }
 
-            // Однородный край - используем его цвет
             if (dominantEdge.dominance >= EDGE_DOMINANCE_THRESHOLD && dominantEdge.variance < EDGE_VARIANCE_THRESHOLD) {
                 let finalColor = dominantEdge.color;
                 const { l } = this.rgbToHsl(finalColor.r, finalColor.g, finalColor.b);
                 
-                // Если черный или его оттенки - добавляем 10% белого
                 if (this.isAlmostBlack(finalColor)) {
                     finalColor = this.mixWithWhite(finalColor, 0.1);
                 }
-                // Если белый или его оттенки - добавляем 25% черного для большего затемнения
                 else if (this.isAlmostWhite(finalColor)) {
                     finalColor = this.mixWithBlack(finalColor, 0.30);
                 }
-                // Если светлый цвет (L > 0.7) - добавляем больше черного для затемнения
                 else if (l > 0.5) {
                     finalColor = this.mixWithBlack(finalColor, 0.1);
                 }
@@ -225,22 +207,18 @@ class CardCarouselManager {
                 };
             }
 
-            // Сложный логотип: находим доминантный цвет по краям
-            // Фильтруем слишком светлые и слишком темные цвета
             const filteredColors = stats.edgeColors.filter(color => {
                 const { l } = this.rgbToHsl(color.r, color.g, color.b);
                 return l <= 0.9 && l >= 0.15;
             });
         
             if (filteredColors.length === 0) {
-                // Если все цвета отфильтрованы, проверяем, может быть все края черные
                 const allDark = stats.edgeColors.every(color => {
                     const { l } = this.rgbToHsl(color.r, color.g, color.b);
                     return l < 0.15;
                 });
                 
                 if (allDark && stats.edgeColors.length > 0) {
-                    // Все края черные - используем черный фон с 10% белого
                     const blackWithWhite = this.mixWithWhite({ r: 20, g: 20, b: 20 }, 0.1);
                     return {
                         mode: 'solid',
@@ -254,7 +232,6 @@ class CardCarouselManager {
                 };
         }
         
-            // Ищем доминантный цвет с учетом насыщенности
             const dominantAll = this.extractDominantColorWeighted(filteredColors);
             if (!dominantAll) {
                 return {
@@ -266,15 +243,12 @@ class CardCarouselManager {
             let finalColor = dominantAll.color;
             const { l } = this.rgbToHsl(finalColor.r, finalColor.g, finalColor.b);
         
-            // Если черный или его оттенки - добавляем 10% белого
             if (this.isAlmostBlack(finalColor)) {
                 finalColor = this.mixWithWhite(finalColor, 0.1);
             }
-            // Если белый или его оттенки - добавляем 25% черного для большего затемнения
             else if (this.isAlmostWhite(finalColor)) {
                 finalColor = this.mixWithBlack(finalColor, 0.30);
             }
-            // Если светлый цвет (L > 0.7) - добавляем больше черного для затемнения
             else if (l > 0.7) {
                 finalColor = this.mixWithBlack(finalColor, 0.30);
             }
@@ -291,8 +265,6 @@ class CardCarouselManager {
     }
 
     mixWithBlack(color, blackRatio) {
-        // blackRatio - доля черного (0.15 = 15%)
-        // colorRatio - доля исходного цвета (0.85 = 85%)
         const colorRatio = 1 - blackRatio;
         return {
             r: Math.round(color.r * colorRatio),
@@ -424,10 +396,8 @@ class CardCarouselManager {
             };
             const { s, l } = this.rgbToHsl(average.r, average.g, average.b);
         
-            // Вес = количество пикселей * насыщенность * нормализованная яркость
-            // Предпочитаем насыщенные цвета средней яркости
-            const saturationWeight = Math.pow(s, 1.5); // Усиливаем влияние насыщенности
-            const lightnessWeight = l > 0.2 && l < 0.85 ? 1.0 : 0.5; // Штраф за слишком светлые/темные
+            const saturationWeight = Math.pow(s, 1.5);
+            const lightnessWeight = l > 0.2 && l < 0.85 ? 1.0 : 0.5;
             const score = bucket.count * saturationWeight * lightnessWeight;
 
             scoredBuckets.push({
@@ -441,16 +411,14 @@ class CardCarouselManager {
 
         if (scoredBuckets.length === 0) return null;
             
-        // Сортируем по score и берем топ-3, затем выбираем самый частый среди них
         scoredBuckets.sort((a, b) => b.score - a.score);
         const topCandidates = scoredBuckets.slice(0, 3);
         
-        // Выбираем самый частый среди топ-кандидатов
         const best = topCandidates.reduce((best, current) => 
             current.count > best.count ? current : best
         );
 
-        const varianceR = 0; // Упрощаем для сложных логотипов
+        const varianceR = 0;
         const varianceG = 0;
         const varianceB = 0;
         const variance = 0;
@@ -482,7 +450,7 @@ class CardCarouselManager {
     ensureUsableColor(color) {
         const { h, s, l } = this.rgbToHsl(color.r, color.g, color.b);
         const safeL = Math.min(0.82, Math.max(0.18, l));
-        const safeS = Math.min(0.9, s); // Убираем минимум насыщенности, чтобы не портить серые цвета
+        const safeS = Math.min(0.9, s);
         const { r, g, b } = this.hslToRgb(h, safeS, safeL);
         return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
     }
@@ -505,8 +473,6 @@ class CardCarouselManager {
     }
 
     mixWithWhite(color, whiteRatio) {
-        // whiteRatio - доля белого (0.1 = 10%)
-        // colorRatio - доля исходного цвета (0.9 = 90%)
         const colorRatio = 1 - whiteRatio;
         return {
             r: Math.round(color.r * colorRatio + 255 * whiteRatio),
@@ -563,7 +529,7 @@ class CardCarouselManager {
     hslToRgb(h, s, l) {
         let r, g, b;
         if (s === 0) {
-            r = g = b = l; // achromatic
+            r = g = b = l;
         } else {
             const hue2rgb = (p, q, t) => {
                 if (t < 0) t += 1;
@@ -590,10 +556,8 @@ class CardCarouselManager {
         card.dataset.cardColor = palette.solid;
         card.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         
-        // Сохраняем цвет фона в localStorage
         if (cardId) {
             this.saveCardData(cardId, { backgroundColor: palette.solid });
         }
     }
 }
-
