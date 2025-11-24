@@ -32,7 +32,38 @@ h1 {
     font-size: 28px;
     font-weight: 600;
     text-align: center;
+    margin: 0;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
     margin-bottom: 20px;
+    position: relative;
+}
+
+.clear-button {
+    padding: 8px 16px;
+    background: rgba(255, 59, 48, 0.2);
+    border: 1px solid rgba(255, 59, 48, 0.4);
+    border-radius: 8px;
+    color: rgba(255, 59, 48, 1);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.clear-button:hover {
+    background: rgba(255, 59, 48, 0.3);
+    border-color: rgba(255, 59, 48, 0.6);
+}
+
+.clear-button:active {
+    transform: scale(0.95);
 }
 
 /* Карточки */

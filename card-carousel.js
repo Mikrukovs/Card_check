@@ -14,6 +14,11 @@ class CardCarouselManager {
         this.inputs.forEach(input => {
             input.addEventListener('change', (event) => this.handleLogoUpload(event));
         });
+        
+        const clearBtn = document.getElementById('clearBtn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => this.clearAllData());
+        }
     }
 
     restoreCards() {
@@ -63,6 +68,31 @@ class CardCarouselManager {
         } catch (error) {
             console.warn('Не удалось загрузить данные карточек', error);
             return null;
+        }
+    }
+
+    clearAllData() {
+        try {
+            localStorage.removeItem(this.storageKey);
+            
+            const cards = document.querySelectorAll('.carousel-card');
+            cards.forEach(card => {
+                const previewImg = card.querySelector('.logo-image');
+                const placeholder = card.querySelector('.logo-placeholder');
+                
+                if (previewImg) {
+                    previewImg.src = '';
+                }
+                
+                card.classList.remove('has-logo');
+                card.style.background = 'rgba(255, 255, 255, 0.1)';
+                card.style.borderColor = '';
+                placeholder?.setAttribute('aria-hidden', 'false');
+            });
+            
+            console.log('Все данные карточек очищены');
+        } catch (error) {
+            console.warn('Не удалось очистить данные карточек', error);
         }
     }
 
